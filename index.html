@@ -812,12 +812,16 @@ const firebaseConfig={apiKey:"AIzaSyB9Z9y_WzS8HkdrCI0ZywNyQ_p2FiUPj48",authDomai
 firebase.initializeApp(firebaseConfig);
 const firebaseAuth=firebase.auth();
 const firestore=firebase.firestore();
+const getFirestore=()=>firestore;
+const doc=(database,...pathSegments)=>database.doc(pathSegments.join('/'));
+const setDoc=(documentRef,data,options)=>documentRef.set(data,options);
+const getDoc=documentRef=>documentRef.get();
 let currentUser=null, _workspaceLoaded=false, _authMode='signin';
 let workspaceRef=null;
 
 function userProfileRef(user=firebaseAuth.currentUser){
   if(!user) throw new Error('A signed-in user is required to access profile data.');
-  return firestore.collection('users').doc(user.uid);
+  return doc(getFirestore(),'users',user.uid);
 }
 async function saveUserProfile(profileData={}){
   const user=firebaseAuth.currentUser;
@@ -828,11 +832,11 @@ async function saveUserProfile(profileData={}){
     ...profileData,
     updatedAt:firebase.firestore.FieldValue.serverTimestamp()
   };
-  await userProfileRef(user).set(profile,{merge:true});
+  await setDoc(userProfileRef(user),profile,{merge:true});
   return profile;
 }
 async function loadUserProfile(user=firebaseAuth.currentUser){
-  const result=await userProfileRef(user).get();
+  const result=await getDoc(userProfileRef(user));
   return result.exists?result.data():null;
 }
 
