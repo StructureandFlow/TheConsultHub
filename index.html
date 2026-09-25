@@ -47,6 +47,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .site-header{background:#fff;border-bottom:.5px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:12px}
 .site-header h1{font-family:'DM Serif Display',serif;font-size:22px;font-weight:400}
 .header-sub{font-size:12px;color:#B4B2A9;font-style:italic;margin-top:2px}
+.app-nav{display:flex;align-items:center;gap:4px;margin-right:4px}.app-nav a{font-size:11px;color:var(--text-sec);text-decoration:none;padding:6px 8px;border:.5px solid var(--border);border-radius:var(--radius-sm);white-space:nowrap}.app-nav a:hover{color:var(--coral);border-color:var(--coral)}
 
 /* SETTINGS GEAR */
 .settings-wrap{position:relative;margin-left:auto}
@@ -689,6 +690,7 @@ textarea{resize:none;overflow:hidden;min-height:56px;line-height:1.5}
 <!-- HEADER -->
 <header class="site-header">
   <div style="flex:1"><h1>The Consult</h1><div class="header-sub">by Structure and Flow</div></div>
+  <nav class="app-nav" aria-label="App navigation"><a href="Launcher.html" target="_top">Launcher</a><a href="Signal.html" target="_top">Signal</a><a href="index.html" target="_top">The Consult</a></nav>
   <div class="account-wrap" id="account-wrap" style="display:none"><div class="account-avatar" id="account-avatar"></div><div class="account-details"><span class="account-name" id="account-name"></span><span class="account-email" id="account-email"></span></div><button class="btn signout-btn" onclick="signOutUser()">Sign out</button></div>
   <div class="settings-wrap" id="stg-wrap">
     <button class="settings-btn" onclick="toggleStgDrop()" title="Settings">&#9881;</button>
