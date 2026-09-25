@@ -690,7 +690,7 @@ textarea{resize:none;overflow:hidden;min-height:56px;line-height:1.5}
 <!-- HEADER -->
 <header class="site-header">
   <div style="flex:1"><h1>The Consult</h1><div class="header-sub">by Structure and Flow</div></div>
-  <nav class="app-nav" aria-label="App navigation"><a href="Launcher.html" target="_top">Launcher</a><a href="Signal.html" target="_top">Signal</a><a href="index.html" target="_top">The Consult</a></nav>
+  <nav class="app-nav" aria-label="App navigation"><a href="Launcher.html" target="_top" onclick="navigateFromConsult(event,'Launcher.html')">Launcher</a><a href="Signal.html" target="_top" onclick="navigateFromConsult(event,'Signal.html')">Signal</a></nav>
   <div class="account-wrap" id="account-wrap" style="display:none"><div class="account-avatar" id="account-avatar"></div><div class="account-details"><span class="account-name" id="account-name"></span><span class="account-email" id="account-email"></span></div><button class="btn signout-btn" onclick="signOutUser()">Sign out</button></div>
   <div class="settings-wrap" id="stg-wrap">
     <button class="settings-btn" onclick="toggleStgDrop()" title="Settings">&#9881;</button>
@@ -2071,6 +2071,12 @@ async function _doAutoSave() {
   if(!currentUser||!workspaceRef||!_workspaceLoaded)return;
   const name=document.getElementById('sbar-name').value.trim()||'My Consult';
   try{await workspaceRef.set({...snapshot(),name,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});activeSessionId='primary';updateSbar(true)}catch(error){updateSbar(false);console.error('Firestore save failed',error)}
+}
+async function navigateFromConsult(event,url){
+  event.preventDefault();
+  clearTimeout(_autoSaveTimer);
+  await _doAutoSave();
+  window.top.location.href=url;
 }
 
 // ── MANUAL SAVE (force save / rename) ──

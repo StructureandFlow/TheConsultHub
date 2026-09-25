@@ -13,8 +13,7 @@
 <body>
 <header class="topbar">
   <div class="brand">Structure and Flow</div><div class="subtitle">Workspace</div>
-  <nav class="nav" aria-label="App navigation"><a class="active" href="Launcher.html">Launcher</a><a href="Signal.html">Signal</a><a href="index.html">The Consult</a></nav>
-  <div class="toolbar"><button onclick="setLayout('split')" title="Show both apps">Both</button><button onclick="setLayout('left')" title="Show Signal">Signal</button><button onclick="setLayout('right')" title="Show The Consult">Consult</button></div>
+  <nav class="nav" aria-label="App navigation"><a href="Signal.html">Signal</a><a href="index.html">The Consult</a></nav>
 </header>
 <main class="workspace" id="workspace">
   <section class="pane pane-left"><div class="pane-header"><span class="dot" style="background:#d85a30"></span><span class="pane-title">Signal</span><div class="pane-actions"><button onclick="reloadPane('signal')" title="Reload Signal">Reload</button><button onclick="openPane('signal')" title="Open Signal in a new tab">Open</button></div></div><div class="frame" id="signal-frame"><iframe id="signal-iframe" src="Signal.html" title="Signal"></iframe></div></section>
