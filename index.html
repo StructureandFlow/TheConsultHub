@@ -815,6 +815,27 @@ const firestore=firebase.firestore();
 let currentUser=null, _workspaceLoaded=false, _authMode='signin';
 let workspaceRef=null;
 
+function userProfileRef(user=firebaseAuth.currentUser){
+  if(!user) throw new Error('A signed-in user is required to access profile data.');
+  return firestore.collection('users').doc(user.uid);
+}
+async function saveUserProfile(profileData={}){
+  const user=firebaseAuth.currentUser;
+  const profile={
+    displayName:profileData.displayName??user?.displayName??'',
+    email:profileData.email??user?.email??'',
+    photoURL:profileData.photoURL??user?.photoURL??'',
+    ...profileData,
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  };
+  await userProfileRef(user).set(profile,{merge:true});
+  return profile;
+}
+async function loadUserProfile(user=firebaseAuth.currentUser){
+  const result=await userProfileRef(user).get();
+  return result.exists?result.data():null;
+}
+
 function setAuthMode(mode){
   _authMode=mode;
   const signup=mode==='signup';
