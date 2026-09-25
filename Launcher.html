@@ -394,6 +394,28 @@ window.addEventListener('storage', e => {
   }
 })();
 </script>
+<script>
+// Hosted mode: use the published tools by default instead of requiring local HTML uploads.
+(function mountHostedTools(){
+  const hosted={signal:'Signal.html',consult:'index.html'};
+  function mount(which){
+    const parent=document.getElementById(which+'-content')||document.getElementById(which+'-frame-wrap');
+    if(!parent)return;
+    parent.innerHTML='';
+    const iframe=document.createElement('iframe');
+    iframe.id=which+'-hosted-iframe';
+    iframe.src=hosted[which];
+    iframe.style.cssText='flex:1;border:none;width:100%;height:100%';
+    iframe.setAttribute('allow','popup *; clipboard-read; clipboard-write');
+    parent.appendChild(iframe);
+    const dot=document.getElementById(which+'-status-dot')||document.getElementById(which+'-dot');
+    const text=document.getElementById(which+'-status-text')||document.getElementById(which+'-status');
+    if(dot)dot.style.background=which==='signal'?'#D85A30':'#534AB7';
+    if(text){text.style.color=which==='signal'?'#D85A30':'#534AB7';text.textContent=(which==='signal'?'Signal':'The Consult')+' — hosted';}
+  }
+  window.addEventListener('load',()=>{mount('signal');mount('consult')});
+})();
+</script>
 </body>
 </html>
 <link rel="preconnect" href="https://fonts.googleapis.com">

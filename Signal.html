@@ -6,6 +6,9 @@
 <title>Signal — by Structure and Flow</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -2374,17 +2377,66 @@ function updateVsmMetrics() {
     <div class="vsm-metric"><div class="vsm-metric-num" style="color:${eff>=50?'var(--teal)':eff>=20?'var(--amber)':'var(--red)'}">${eff}%</div><div class="vsm-metric-lbl">Process efficiency</div></div>`;
 }
 
-// ══ HISTORY (localStorage) ══
+// ══ CLOUD STORAGE ══
+const signalFirebaseConfig={apiKey:"AIzaSyB9Z9y_WzS8HkdrCI0ZywNyQ_p2FiUPj48",authDomain:"theconsulthub-1dd49.firebaseapp.com",projectId:"theconsulthub-1dd49",storageBucket:"theconsulthub-1dd49.firebasestorage.app",messagingSenderId:"652943098826",appId:"1:652943098826:web:4e91d663459cd1b59f8533"};
+const signalFirebaseApp=firebase.initializeApp(signalFirebaseConfig,'signal');
+const signalAuth=firebase.auth(signalFirebaseApp);
+const signalFirestore=firebase.firestore(signalFirebaseApp);
+let signalCloudReady=false, signalCloudSessions=[], signalPreferences={};
+let signalCloudUser=null;
+function signalCloudDataRef(user=signalCloudUser){return user?signalFirestore.doc(`users/${user.uid}/signal/data`):null}
+function signalPersistCloud(){
+  const ref=signalCloudDataRef();
+  if(!ref)return;
+  ref.set({sessions:signalCloudSessions,preferences:signalPreferences,activeSessionId},{merge:true}).catch(error=>console.error('Signal cloud save failed',error));
+}
+function signalGetPreference(key,fallback){
+  if(signalCloudReady&&Object.prototype.hasOwnProperty.call(signalPreferences,key))return signalPreferences[key];
+  try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback))}catch(e){return fallback}
+}
+function signalSetPreference(key,value){
+  if(signalCloudReady){signalPreferences[key]=value;signalPersistCloud();return}
+  localStorage.setItem(key,JSON.stringify(value));
+}
+signalAuth.onAuthStateChanged(async user=>{
+  signalCloudUser=user;
+  signalCloudReady=false;
+  if(!user)return;
+  try{
+    const result=await signalCloudDataRef(user).get();
+    const data=result.exists?result.data():{};
+    signalCloudSessions=Array.isArray(data.sessions)?data.sessions:[];
+    signalPreferences=data.preferences&&typeof data.preferences==='object'?data.preferences:{};
+    if(!signalCloudSessions.length){
+      try{const legacy=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');if(Array.isArray(legacy)&&legacy.length){signalCloudSessions=legacy;signalPersistCloud()}}catch(e){}
+    }
+    if(signalPreferences[REG_OVERRIDE_KEY]){
+      Object.keys(REG_TYPE_NAMES).forEach(type=>{if(signalPreferences[REG_OVERRIDE_KEY][type])regOverrides[type]=signalPreferences[REG_OVERRIDE_KEY][type]});
+    }
+    signalCloudReady=true;
+    if(signalCloudSessions.length){
+      renderHistory();
+      updateSaveBarLabel();
+    }
+    renderRiCustomQuestions();
+    renderRegCustomQuestions();
+    initRegression();
+  }catch(error){console.error('Signal cloud load failed',error)}
+});
+
+// ══ HISTORY ══
 const STORAGE_KEY = 'rca_tool_sessions';
 const ACTIVE_ID_KEY = 'rca_active_session_id';
 let activeSessionId = null; // tracks the currently loaded session
 
 function getAllSessions() {
+  if(signalCloudReady)return signalCloudSessions;
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
   catch(e) { return []; }
 }
 
 function putSessions(sessions) {
+  if(signalCloudReady){signalCloudSessions=sessions;signalPersistCloud();return}
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
 }
 
@@ -2799,7 +2851,7 @@ let regOverrides = {};
 let regState = {};
 Object.keys(REG_TYPE_NAMES).forEach(t => { regOverrides[t] = {}; });
 try {
-  const savedRegOverrides = JSON.parse(localStorage.getItem(REG_OVERRIDE_KEY) || '{}');
+  const savedRegOverrides = signalGetPreference(REG_OVERRIDE_KEY, {});
   Object.keys(REG_TYPE_NAMES).forEach(t => {
     if (savedRegOverrides[t] && typeof savedRegOverrides[t] === 'object') regOverrides[t] = savedRegOverrides[t];
   });
@@ -2815,10 +2867,10 @@ function regQuestionIsApplicable(question, type) {
   return question.custom ? question.applicable !== false : regGetApplicable(type, question.id);
 }
 
-function getRegQuestionEdits(){try{return JSON.parse(localStorage.getItem(REG_EDIT_KEY)||'{}')}catch(e){return{}}}
-function saveRegQuestionEdits(edits){localStorage.setItem(REG_EDIT_KEY,JSON.stringify(edits))}
-function getRegDeletedQuestions(){try{return new Set(JSON.parse(localStorage.getItem(REG_DELETED_KEY)||'[]'))}catch(e){return new Set()}}
-function saveRegDeletedQuestions(ids){localStorage.setItem(REG_DELETED_KEY,JSON.stringify([...ids]))}
+function getRegQuestionEdits(){return signalGetPreference(REG_EDIT_KEY,{})}
+function saveRegQuestionEdits(edits){signalSetPreference(REG_EDIT_KEY,edits)}
+function getRegDeletedQuestions(){return new Set(signalGetPreference(REG_DELETED_KEY,[]))}
+function saveRegDeletedQuestions(ids){signalSetPreference(REG_DELETED_KEY,[...ids])}
 function getActiveRegQuestions(){
   const edits=getRegQuestionEdits();
   const deleted=getRegDeletedQuestions();
@@ -3083,7 +3135,7 @@ function regSetStatus(id, status) {
 }
 function regSetApplicable(id, checked) {
   regOverrides[regCurrentType][id] = checked;
-  localStorage.setItem(REG_OVERRIDE_KEY, JSON.stringify(regOverrides));
+  signalSetPreference(REG_OVERRIDE_KEY,regOverrides);
   updateRegQuestionRow(id, checked);
   updateRegBadgeCount();
 }
@@ -3936,8 +3988,8 @@ function riUpdateHiddenCount() {
 }
 
 // ── RI Custom Questions ──
-function getRiCustomQs(){try{return JSON.parse(localStorage.getItem(RI_CUSTOM_KEY)||'[]')}catch(e){return[]}}
-function saveRiCustomQs(qs){localStorage.setItem(RI_CUSTOM_KEY,JSON.stringify(qs))}
+function getRiCustomQs(){return signalGetPreference(RI_CUSTOM_KEY,[])}
+function saveRiCustomQs(qs){signalSetPreference(RI_CUSTOM_KEY,qs)}
 function addRiCustomQuestion(){
   const qs=getRiCustomQs();
   qs.push({id:'ri_cq_'+Date.now(),label:'',value:''});
@@ -4005,8 +4057,8 @@ function regShowAll(){
 }
 
 // ── Reg Custom Questions ──
-function getRegCustomQs(){try{return JSON.parse(localStorage.getItem(REG_CUSTOM_KEY)||'[]')}catch(e){return[]}}
-function saveRegCustomQs(qs){localStorage.setItem(REG_CUSTOM_KEY,JSON.stringify(qs))}
+function getRegCustomQs(){return signalGetPreference(REG_CUSTOM_KEY,[])}
+function saveRegCustomQs(qs){signalSetPreference(REG_CUSTOM_KEY,qs)}
 function addRegSectionQuestion(cat) {
   const qs = getRegCustomQs();
   qs.push({ id:'reg_cq_'+Date.now(), label:'', cat: cat, applicable:true });
