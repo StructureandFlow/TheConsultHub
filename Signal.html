@@ -126,6 +126,14 @@
   .help-section li { font-size: 13px; color: var(--text); line-height: 1.65; margin-bottom: 4px; }
   .help-section li strong { color: var(--text); }
 
+  .swot-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px; }
+  .swot-quadrant { background:#fff;border:.5px solid var(--border);border-top:3px solid var(--swot-color);border-radius:var(--radius-sm);padding:14px; }
+  .swot-quadrant h3 { color:var(--swot-color);font-size:13px;font-weight:600;margin:0 0 10px; }
+  .swot-item { display:flex;gap:6px;align-items:flex-start;margin-bottom:7px; }
+  .swot-item textarea { flex:1;min-height:34px;resize:vertical;background:#fafaf8; }
+  .swot-item .del-btn { margin-top:7px; }
+  @media(max-width:640px){.swot-grid{grid-template-columns:1fr}}
+
   .help-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 14px; }
   .help-table th { background: var(--coral); color: #fff; font-weight: 500; padding: 7px 10px; text-align: left; }
   .help-table td { padding: 6px 10px; border-bottom: 0.5px solid var(--border); vertical-align: top; }
@@ -973,6 +981,20 @@
     </div>
   </div>
 
+  <!-- ══ SWOT ══ -->
+  <div class="panel" id="panel-swot">
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#534AB7"></span>SWOT analysis<button class="help-btn" onclick="openHelp('swot')" title="Help: SWOT Analysis">?</button><button class="copy-btn" onclick="exportTab('swot')" title="Export as HTML report">⬇ Export</button></div>
+      <p style="font-size:13px;color:var(--text-sec);margin-bottom:16px">Assess internal strengths and weaknesses alongside external opportunities and threats to guide strategy and process decisions.</p>
+      <div class="swot-grid">
+        <div class="swot-quadrant" style="--swot-color:#1D9E75"><h3>Strengths</h3><div id="swot-strengths"></div><button class="btn btn-sm" onclick="addSwotItem('strengths')">+ Add strength</button></div>
+        <div class="swot-quadrant" style="--swot-color:#A32D2D"><h3>Weaknesses</h3><div id="swot-weaknesses"></div><button class="btn btn-sm" onclick="addSwotItem('weaknesses')">+ Add weakness</button></div>
+        <div class="swot-quadrant" style="--swot-color:#185FA5"><h3>Opportunities</h3><div id="swot-opportunities"></div><button class="btn btn-sm" onclick="addSwotItem('opportunities')">+ Add opportunity</button></div>
+        <div class="swot-quadrant" style="--swot-color:#BA7517"><h3>Threats</h3><div id="swot-threats"></div><button class="btn btn-sm" onclick="addSwotItem('threats')">+ Add threat</button></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ ACTIONS ══ -->
   <div class="panel" id="panel-actions">
     <div class="card">
@@ -1528,6 +1550,39 @@ const HELP_SECTIONS = {
         <strong>Current vs future state</strong>Always map the current state first — exactly how the process works today, warts and all. Only then design the future state. Teams that skip straight to future state often miss the real problems.
       </div>`
   },
+  'swot': {
+    label: 'SWOT',
+    color: '#534AB7',
+    tagBg: '#EEEDFE',
+    html: `
+      <h2>SWOT Analysis</h2>
+      <span class="method-tag" style="background:#EEEDFE;color:#534AB7">Strategic · Structured · Decision support</span>
+      <h3>What it is</h3>
+      <p>SWOT analysis is a structured way to assess internal strengths and weaknesses alongside external opportunities and threats. It helps a team understand its current position before choosing a strategy, improvement project, or response.</p>
+      <h3>The four quadrants</h3>
+      <ul>
+        <li><strong>Strengths:</strong> Internal capabilities, assets, advantages, or evidence of what already works.</li>
+        <li><strong>Weaknesses:</strong> Internal limitations, gaps, dependencies, or recurring problems within your control.</li>
+        <li><strong>Opportunities:</strong> External conditions, trends, partnerships, or changes that could create value.</li>
+        <li><strong>Threats:</strong> External risks, competitors, constraints, or changes that could reduce performance.</li>
+      </ul>
+      <h3>How to do it</h3>
+      <ol class="step-list">
+        <li><strong>Define the subject.</strong> State the process, team, product, project, or decision being assessed.</li>
+        <li><strong>Brainstorm all four quadrants.</strong> Separate internal factors from external factors before prioritising.</li>
+        <li><strong>Use evidence.</strong> Replace vague claims with data, examples, customer feedback, or observed process results.</li>
+        <li><strong>Prioritise.</strong> Select the few factors with the greatest impact and likelihood.</li>
+        <li><strong>Turn insight into action.</strong> Use strengths to capture opportunities, address weaknesses, and reduce threats.</li>
+      </ol>
+      <h3>Useful prompts</h3>
+      <ul>
+        <li>What do we do reliably better than alternatives?</li>
+        <li>Where do delays, defects, or capability gaps repeatedly appear?</li>
+        <li>What external change could make this easier or more valuable?</li>
+        <li>What external event could make the current approach less viable?</li>
+      </ul>
+      <div class="help-insight" style="background:#EEEDFE;border:0.5px solid #C5C2ED"><strong>Key insight</strong>SWOT is a starting point for decisions, not the decision itself. Convert the most important quadrant relationships into owners, actions, and measurable outcomes.</div>`
+  },
   'vsm': {
     label: 'Value Stream',
     color: '#A32D2D',
@@ -1574,7 +1629,7 @@ const HELP_SECTIONS = {
   }
 };
 
-const HELP_ORDER = ['five-whys','fishbone','fault-tree','pareto','dmaic','fmea','sipoc','process-map','vsm'];
+const HELP_ORDER = ['five-whys','fishbone','fault-tree','pareto','dmaic','fmea','sipoc','process-map','vsm','swot'];
 
 function openHelp(section) {
   const overlay = document.getElementById('help-overlay');
@@ -1664,6 +1719,7 @@ const CAT_TABS = {
     {id:'sipoc',       label:'SIPOC'},
     {id:'process-map', label:'Process Map'},
     {id:'vsm',         label:'Value Stream'},
+    {id:'swot',        label:'SWOT'},
   ],
   'report-ops': [
     {id:'report-intake', label:'Report Intake'},
@@ -2123,6 +2179,13 @@ function copyReport(){
   navigator.clipboard.writeText(text).then(()=>alert('Report copied!')).catch(()=>alert('Copy failed — please select and copy manually.'));
 }
 
+// ══ SWOT ══
+let swotData={strengths:[],weaknesses:[],opportunities:[],threats:[]};
+function addSwotItem(type){swotData[type].push('');renderSwot();document.querySelector(`#swot-${type} textarea:last-of-type`)?.focus();}
+function updateSwotItem(type,index,value){swotData[type][index]=value;}
+function deleteSwotItem(type,index){swotData[type].splice(index,1);renderSwot();}
+function renderSwot(){Object.entries(swotData).forEach(([type,items])=>{const el=document.getElementById('swot-'+type);if(!el)return;el.innerHTML=items.map((item,index)=>`<div class="swot-item"><textarea class="auto-ta" placeholder="Add an observation…" oninput="updateSwotItem('${type}',${index},this.value);autoResizeTa(this)">${String(item||'').replace(/</g,'&lt;')}</textarea><button class="del-btn" onclick="deleteSwotItem('${type}',${index})" title="Delete item">×</button></div>`).join('');el.querySelectorAll('textarea').forEach(autoResizeTa);});}
+
 // ══ SIPOC ══
 let sipocRows = [];
 let sipocIdCounter = 1;
@@ -2486,6 +2549,7 @@ function captureSnapshot() {
     sipocRows:   JSON.parse(JSON.stringify(sipocRows)),
     pmSteps:     JSON.parse(JSON.stringify(pmSteps)),
     vsmSteps:    JSON.parse(JSON.stringify(vsmSteps)),
+    swotData:    JSON.parse(JSON.stringify(swotData)),
     actions:     JSON.parse(JSON.stringify(actions)),
     riData:      captureRiData(),
     regState:    JSON.parse(JSON.stringify(regState)),
@@ -2506,6 +2570,7 @@ function detectUsedMethods(snap) {
   if (snap.sipocRows && snap.sipocRows.some(r=>r.supplier||r.input||r.process||r.output||r.customer)) used.push('SIPOC');
   if (snap.pmSteps && snap.pmSteps.some(s=>s.label.trim())) used.push('Process Map');
   if (snap.vsmSteps && snap.vsmSteps.some(s=>s.name.trim())) used.push('VSM');
+  if (snap.swotData && Object.values(snap.swotData).some(items=>items.some(item=>item.trim()))) used.push('SWOT');
   if (snap.actions && snap.actions.length) used.push('Actions');
   if (snap.riData && Object.values(snap.riData).some(v=>v&&v!==false&&v!==true)) used.push('Report Intake');
   if (snap.regState && Object.values(snap.regState).some(s=>s.status||s.note)) used.push('Regression');
@@ -2608,6 +2673,7 @@ function loadSession(id) {
   pmIdCounter = pmSteps.length ? Math.max(...pmSteps.map(s=>s.id)) + 1 : 1;
   vsmSteps = d.vsmSteps || [];
   vsmIdCounter = vsmSteps.length ? Math.max(...vsmSteps.map(s=>s.id)) + 1 : 1;
+  swotData = d.swotData || {strengths:[],weaknesses:[],opportunities:[],threats:[]};
   actions = d.actions || [];
   actIdCounter = actions.length ? Math.max(...actions.map(a=>a.id)) + 1 : 1;
 
@@ -2639,6 +2705,7 @@ function loadSession(id) {
   activeDmaic = 'define'; renderDmaic();
   renderFmea(); renderSipoc(); renderPmList(); renderPmSvg();
   renderVsmList(); renderVsmSvg(); updateVsmMetrics();
+  renderSwot();
   renderActions();
   if (d.riData) restoreRiData(d.riData);
   if (d.regState) regState = d.regState;
@@ -2653,14 +2720,14 @@ function loadSession(id) {
 
   const methodToCat = {
     '5 Whys':'rca','Fishbone':'rca','Fault Tree':'rca','Pareto':'rca','DMAIC':'rca','FMEA':'rca',
-    'SIPOC':'process','Process Map':'process','VSM':'process',
+    'SIPOC':'process','Process Map':'process','VSM':'process','SWOT':'process',
     'Report Intake':'report-ops','Regression':'report-ops',
     'Actions':'tracking'
   };
   const tabMap = {
     '5 Whys':'five-whys','Fishbone':'fishbone','Fault Tree':'fault-tree',
     'Pareto':'pareto','DMAIC':'dmaic','FMEA':'fmea',
-    'SIPOC':'sipoc','Process Map':'process-map','VSM':'vsm',
+    'SIPOC':'sipoc','Process Map':'process-map','VSM':'vsm','SWOT':'swot',
     'Actions':'actions','Report Intake':'report-intake','Regression':'regression'
   };
   const firstMethod = (session.methods||[])[0];
@@ -3640,6 +3707,15 @@ function getTabHtml(tab) {
       <tbody>${steps}</tbody></table></div>`};
   }
 
+  if (tab === 'swot') {
+    const labels={strengths:'Strengths',weaknesses:'Weaknesses',opportunities:'Opportunities',threats:'Threats'};
+    const colors={strengths:'#1D9E75',weaknesses:'#A32D2D',opportunities:'#185FA5',threats:'#BA7517'};
+    const hasData=Object.values(swotData).some(items=>items.some(item=>item.trim()));
+    if(!hasData)return{title:'SWOT Analysis',body:''};
+    const quadrants=Object.entries(labels).map(([key,label])=>`<div class="section"><div class="section-title"><span class="section-dot" style="background:${colors[key]}"></span>${label}</div><ul>${swotData[key].filter(Boolean).map(item=>`<li>${item}</li>`).join('')||'<li>None recorded.</li>'}</ul></div>`).join('');
+    return{title:'SWOT Analysis',body:`<div class="section"><div class="section-title"><span class="section-dot" style="background:#534AB7"></span>Strategic Assessment</div>${quadrants}</div>`};
+  }
+
   if (tab === 'vsm') {
     const hasData = vsmSteps.some(s=>s.name.trim());
     if (!hasData) return {title:'Value Stream Map', body:''};
@@ -3689,6 +3765,7 @@ const TAB_VISIBILITY = {
       {id:'sipoc',        label:'SIPOC'},
       {id:'process-map',  label:'Process Map'},
       {id:'vsm',          label:'Value Stream'},
+      {id:'swot',         label:'SWOT'},
     ]
   },
   'report-ops': {
@@ -3709,7 +3786,7 @@ const TAB_VISIBILITY = {
 
 // State: which cats and tabs are visible
 let visibleCats = new Set(['rca','process','report-ops','tracking']);
-let visibleTabs = new Set(['five-whys','fishbone','fault-tree','pareto','dmaic','fmea','sipoc','process-map','vsm','report-intake','regression','actions','report']);
+let visibleTabs = new Set(['five-whys','fishbone','fault-tree','pareto','dmaic','fmea','sipoc','process-map','vsm','swot','report-intake','regression','actions','report']);
 
 function initTabSelector() {
   const container = document.getElementById('tab-selector-cats');
@@ -4143,6 +4220,7 @@ addFmeaRow(); renderActions();
 addSipocRow(); addSipocRow(); addSipocRow();
 addPmStep(); addPmStep(); addPmStep();
 addVsmStep(); addVsmStep(); addVsmStep();
+renderSwot();
 initRegression();
 renderRiCustomQuestions();
 renderRegCustomQuestions();
