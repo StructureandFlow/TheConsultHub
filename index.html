@@ -2903,6 +2903,12 @@ function _doSendToRCA(t) {
       `• Severity: ${payload.severity}\n\n` +
       `Open the RCA Tool — it will prompt you to load this task.`
     );
+    if(confirmed){
+      const signalWindow=window.open('Signal.html','_blank','noopener');
+      if(!signalWindow) window.location.href='Signal.html';
+    } else {
+      localStorage.removeItem(RCA_TRANSFER_KEY);
+    }
   } catch(e) {
     alert('Could not write to shared storage. Make sure both tools are open in the same browser.');
   }
