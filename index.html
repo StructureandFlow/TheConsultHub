@@ -41,7 +41,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .auth-remember{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-sec);margin:4px 0 16px}.auth-remember input{accent-color:var(--coral)}
 .auth-submit{width:100%;justify-content:center;padding:10px;margin-bottom:10px}.auth-google{width:100%;justify-content:center}.auth-divider{display:flex;align-items:center;gap:10px;color:var(--text-ter);font-size:11px;margin:16px 0}.auth-divider::before,.auth-divider::after{content:'';height:1px;background:var(--border);flex:1}
 .auth-error{min-height:18px;color:var(--red);font-size:12px;margin:12px 0 0}.auth-loading{font-size:12px;color:var(--text-sec);margin-top:12px}
-.account-wrap{display:flex;align-items:center;gap:9px;margin-left:auto}.account-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;background:var(--coral-light);display:flex;align-items:center;justify-content:center;color:var(--coral);font-size:12px;font-weight:600}.account-name{font-size:12px;color:var(--text-sec);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.signout-btn{font-size:12px;padding:5px 9px}
+.account-wrap{display:flex;align-items:center;gap:9px;margin-left:auto}.account-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;background:var(--coral-light);display:flex;align-items:center;justify-content:center;color:var(--coral);font-size:12px;font-weight:600}.account-details{display:flex;flex-direction:column;min-width:0}.account-name{font-size:12px;color:var(--text-sec);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.account-email{font-size:10px;color:var(--text-ter);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.signout-btn{font-size:12px;padding:5px 9px}
 
 /* HEADER */
 .site-header{background:#fff;border-bottom:.5px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:12px}
@@ -689,7 +689,7 @@ textarea{resize:none;overflow:hidden;min-height:56px;line-height:1.5}
 <!-- HEADER -->
 <header class="site-header">
   <div style="flex:1"><h1>The Consult</h1><div class="header-sub">by Structure and Flow</div></div>
-  <div class="account-wrap" id="account-wrap" style="display:none"><div class="account-avatar" id="account-avatar"></div><span class="account-name" id="account-name"></span><button class="btn signout-btn" onclick="signOutUser()">Sign out</button></div>
+  <div class="account-wrap" id="account-wrap" style="display:none"><div class="account-avatar" id="account-avatar"></div><div class="account-details"><span class="account-name" id="account-name"></span><span class="account-email" id="account-email"></span></div><button class="btn signout-btn" onclick="signOutUser()">Sign out</button></div>
   <div class="settings-wrap" id="stg-wrap">
     <button class="settings-btn" onclick="toggleStgDrop()" title="Settings">&#9881;</button>
     <div class="settings-dropdown" id="stg-drop">
@@ -812,6 +812,8 @@ const firebaseConfig={apiKey:"AIzaSyB9Z9y_WzS8HkdrCI0ZywNyQ_p2FiUPj48",authDomai
 firebase.initializeApp(firebaseConfig);
 const firebaseAuth=firebase.auth();
 const firestore=firebase.firestore();
+const auth=firebaseAuth;
+const onAuthStateChanged=(authInstance,callback)=>authInstance.onAuthStateChanged(callback);
 const getFirestore=()=>firestore;
 const doc=(database,...pathSegments)=>database.doc(pathSegments.join('/'));
 const setDoc=(documentRef,data,options)=>documentRef.set(data,options);
@@ -881,7 +883,7 @@ async function signInWithGoogle(){
 function setAuthBusy(busy){document.getElementById('auth-submit').disabled=busy;document.querySelector('.auth-google').disabled=busy;document.getElementById('auth-loading').textContent=busy?'Working...':''}
 function showAuthError(error){const messages={'auth/invalid-credential':'The email or password is incorrect.','auth/email-already-in-use':'An account already exists for this email.','auth/weak-password':'Use a password with at least 6 characters.','auth/popup-closed-by-user':'Google sign-in was cancelled.','auth/operation-not-allowed':'Google sign-in is not enabled in Firebase Authentication.','auth/unauthorized-domain':'This website domain is not authorized in Firebase Authentication.','auth/popup-blocked':'Your browser blocked the Google sign-in window. Please allow popups and try again.'};document.getElementById('auth-error').textContent=messages[error.code]||error.message||'Authentication failed.'}
 async function signOutUser(){await firebaseAuth.signOut()}
-function updateAccount(user){const name=user.displayName||user.email||'Account',avatar=document.getElementById('account-avatar');document.getElementById('account-name').textContent=name;if(user.photoURL){avatar.innerHTML=`<img src="${user.photoURL}" alt="" style="width:100%;height:100%;border-radius:50%">`}else avatar.textContent=name.charAt(0).toUpperCase();document.getElementById('account-wrap').style.display='flex'}
+function updateAccount(user){const name=user.displayName||user.email||'Account',avatar=document.getElementById('account-avatar');document.getElementById('account-name').textContent=name;document.getElementById('account-email').textContent=user.email||'';if(user.photoURL){avatar.innerHTML=`<img src="${user.photoURL}" alt="" style="width:100%;height:100%;border-radius:50%">`}else avatar.textContent=name.charAt(0).toUpperCase();document.getElementById('account-wrap').style.display='flex'}
 async function hydrateWorkspace(user){
   workspaceRef=firestore.doc(`users/${user.uid}/workspaces/primary`);
   const result=await workspaceRef.get();
@@ -889,7 +891,7 @@ async function hydrateWorkspace(user){
   else {activeSessionId='primary';document.getElementById('sbar-name').value='My Consult';renderDashboard();renderTable();renderTimeDashboard();updateSbar();}
   _workspaceLoaded=true;
 }
-firebaseAuth.onAuthStateChanged(async user=>{
+onAuthStateChanged(auth,async user=>{
   currentUser=user;_workspaceLoaded=false;
   if(!user){document.getElementById('app-workspace').classList.remove('ready');document.getElementById('auth-overlay').classList.remove('hidden');document.getElementById('account-wrap').style.display='none';return}
   document.getElementById('auth-loading').textContent='Loading your workspace...';
