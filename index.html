@@ -551,6 +551,7 @@ textarea{resize:none;overflow:hidden;min-height:56px;line-height:1.5}
     </div>
     <div class="modal-body" id="project-modal-body"></div>
     <div class="modal-footer">
+      <button class="btn" onclick="deleteProject(_editProject?.id)" style="margin-right:auto;color:var(--red);border-color:var(--red-light)">Delete project</button>
       <button class="btn" onclick="closeProjectModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveProject()">Save project</button>
     </div>
@@ -1872,6 +1873,20 @@ function openNewProject(){_editProject=newProjectObj();_timelineEditIndex=null;r
 function openProject(id){const p=projects.find(x=>x.id===id);if(!p)return;_editProject=JSON.parse(JSON.stringify(p));_timelineEditIndex=null;renderProjectModal();document.getElementById('project-overlay').classList.add('open')}
 function closeProjectModal(){syncProjectFields();document.getElementById('project-overlay').classList.remove('open');_editProject=null;_timelineEditIndex=null}
 function saveProject(){if(!_editProject)return;syncProjectFields();const i=projects.findIndex(p=>p.id===_editProject.id);if(i>=0)projects[i]=_editProject;else projects.push(_editProject);closeProjectModal();renderProjects();autoSave()}
+function deleteProject(id){
+  if(id===undefined||id===null)return;
+  const project=projects.find(p=>p.id===id);
+  if(!project)return;
+  if(!confirm(`Delete "${project.name||projectCode(project.id)}"?\n\nThe project and its meetings, notes, and actions will be deleted. Linked tasks will be kept.`))return;
+  tasks.forEach(task=>{if(Number(task.projectId)===Number(id))task.projectId=null});
+  projects=projects.filter(p=>p.id!==id);
+  _editProject=null;
+  closeProjectModal();
+  renderProjects();
+  renderTable();
+  renderDashboard();
+  autoSave();
+}
 function refreshProjectModal(){syncProjectFields();renderProjectModal()}
 function addProjectListItem(type){syncProjectFields();_editProject[type].push('');refreshProjectModal()}
 function removeProjectListItem(type,i){syncProjectFields();_editProject[type].splice(i,1);refreshProjectModal()}
