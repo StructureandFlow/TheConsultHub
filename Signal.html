@@ -3839,7 +3839,12 @@ function _sendToConsult(payload) {
       `${payload.requestor ? 'Requestor: ' + payload.requestor + '\n' : ''}` +
       `\nOpen The Consult — it will prompt you to create this task.`
     );
-    if (!confirmed) localStorage.removeItem(CONSULT_TRANSFER_KEY);
+    if (!confirmed) {
+      localStorage.removeItem(CONSULT_TRANSFER_KEY);
+    } else {
+      const consultWindow=window.open('index.html','_blank','noopener');
+      if(!consultWindow) window.location.href='index.html';
+    }
   } catch(e) {
     alert('Could not write to shared storage. Make sure both tools are open in the same browser.');
   }
