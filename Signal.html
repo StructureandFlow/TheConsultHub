@@ -129,9 +129,13 @@
   .swot-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px; }
   .swot-quadrant { background:#fff;border:.5px solid var(--border);border-top:3px solid var(--swot-color);border-radius:var(--radius-sm);padding:14px; }
   .swot-quadrant h3 { color:var(--swot-color);font-size:13px;font-weight:600;margin:0 0 10px; }
-  .swot-item { display:flex;gap:6px;align-items:flex-start;margin-bottom:7px; }
-  .swot-item textarea { flex:1;min-height:34px;resize:vertical;background:#fafaf8; }
-  .swot-item .del-btn { margin-top:7px; }
+  .swot-list { display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px;min-height:34px;margin-bottom:10px;padding:3px;border:1px dashed transparent;border-radius:var(--radius-sm);transition:border-color .15s,background .15s; }
+  .swot-list.drop-target { border-color:var(--swot-color);background:color-mix(in srgb,var(--swot-color) 7%,#fff); }
+  .swot-item { display:inline-flex;align-items:flex-start;gap:4px;max-width:100%;padding:5px 6px 5px 9px;background:#fafaf8;border:.5px solid var(--border-mid);border-radius:5px;cursor:grab; }
+  .swot-item:active { cursor:grabbing; }
+  .swot-text { min-width:20px;max-width:calc(100% - 22px);font-size:12px;line-height:1.35;overflow-wrap:anywhere;white-space:pre-wrap;outline:none; }
+  .swot-text:focus { outline:1px solid var(--coral);outline-offset:2px; }
+  .swot-item .del-btn { flex:0 0 auto;margin:0 0 0 2px;font-size:15px; }
   @media(max-width:640px){.swot-grid{grid-template-columns:1fr}}
 
   .help-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 14px; }
@@ -2181,10 +2185,16 @@ function copyReport(){
 
 // ══ SWOT ══
 let swotData={strengths:[],weaknesses:[],opportunities:[],threats:[]};
-function addSwotItem(type){swotData[type].push('');renderSwot();document.querySelector(`#swot-${type} textarea:last-of-type`)?.focus();}
-function updateSwotItem(type,index,value){swotData[type][index]=value;}
-function deleteSwotItem(type,index){swotData[type].splice(index,1);renderSwot();}
-function renderSwot(){Object.entries(swotData).forEach(([type,items])=>{const el=document.getElementById('swot-'+type);if(!el)return;el.innerHTML=items.map((item,index)=>`<div class="swot-item"><textarea class="auto-ta" placeholder="Add an observation…" oninput="updateSwotItem('${type}',${index},this.value);autoResizeTa(this)">${String(item||'').replace(/</g,'&lt;')}</textarea><button class="del-btn" onclick="deleteSwotItem('${type}',${index})" title="Delete item">×</button></div>`).join('');el.querySelectorAll('textarea').forEach(autoResizeTa);});}
+function addSwotItem(type){swotData[type].push('');renderSwot();document.querySelector(`#swot-${type} .swot-text:last-of-type`)?.focus();}
+function updateSwotItem(type,index,value){swotData[type][index]=value;autoSaveSignalDraft();}
+function syncSwotEditors(){document.querySelectorAll('.swot-text').forEach(editor=>{const type=editor.dataset.type,index=Number(editor.dataset.index);if(swotData[type]&&swotData[type][index]!==undefined)swotData[type][index]=editor.innerText.trim()});}
+function autoSaveSignalDraft(){clearTimeout(window._swotSaveTimer);window._swotSaveTimer=setTimeout(()=>{if(typeof _doSave==='function')_doSave('')},500)}
+function deleteSwotItem(type,index){swotData[type].splice(index,1);renderSwot();autoSaveSignalDraft();}
+function handleSwotDragStart(event,type,index){syncSwotEditors();event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',JSON.stringify({type,index}))}
+function handleSwotDragOver(event,type){event.preventDefault();event.dataTransfer.dropEffect='move';document.getElementById('swot-'+type)?.classList.add('drop-target')}
+function handleSwotDragLeave(event,type){if(!event.currentTarget.contains(event.relatedTarget))document.getElementById('swot-'+type)?.classList.remove('drop-target')}
+function handleSwotDrop(event,targetType){event.preventDefault();const target=document.getElementById('swot-'+targetType);target?.classList.remove('drop-target');try{syncSwotEditors();const source=JSON.parse(event.dataTransfer.getData('text/plain'));const text=swotData[source.type]?.splice(source.index,1)[0];if(text===undefined)return;swotData[targetType].push(text);renderSwot();autoSaveSignalDraft()}catch(error){console.warn('Could not move SWOT item',error)}}
+function renderSwot(){Object.entries(swotData).forEach(([type,items])=>{const el=document.getElementById('swot-'+type);if(!el)return;el.innerHTML=items.map((item,index)=>`<div class="swot-item" draggable="true" ondragstart="handleSwotDragStart(event,'${type}',${index})"><div class="swot-text" contenteditable="true" data-type="${type}" data-index="${index}" role="textbox" aria-label="${type} item" oninput="updateSwotItem('${type}',${index},this.innerText)">${String(item||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div><button class="del-btn" onclick="event.stopPropagation();deleteSwotItem('${type}',${index})" title="Delete item">×</button></div>`).join('');el.ondragover=event=>handleSwotDragOver(event,type);el.ondragleave=event=>handleSwotDragLeave(event,type);el.ondrop=event=>handleSwotDrop(event,type);});}
 
 // ══ SIPOC ══
 let sipocRows = [];
