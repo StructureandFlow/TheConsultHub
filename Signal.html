@@ -130,7 +130,7 @@
   .swot-quadrant { background:#fff;border:.5px solid var(--border);border-top:3px solid var(--swot-color);border-radius:var(--radius-sm);padding:14px; }
   .swot-quadrant h3 { color:var(--swot-color);font-size:13px;font-weight:600;margin:0 0 10px; }
   .swot-list { display:flex;flex-wrap:wrap;align-items:flex-start;gap:6px;min-height:34px;margin-bottom:10px;padding:3px;border:1px dashed transparent;border-radius:var(--radius-sm);transition:border-color .15s,background .15s; }
-  .swot-list.drop-target { border-color:var(--swot-color);background:color-mix(in srgb,var(--swot-color) 7%,#fff); }
+  .swot-list.drop-target { border-color:var(--swot-color);background:#fafafa; }
   .swot-item { display:flex;align-items:flex-start;gap:6px;width:100%;max-width:100%;padding:6px 7px;background:#fafaf8;border:.5px solid var(--border-mid);border-radius:5px; }
   .swot-item:active { cursor:grabbing; }
   .swot-drag-handle { flex:0 0 14px;color:var(--text-ter);font-size:13px;line-height:1.35;cursor:grab;user-select:none; }
@@ -532,7 +532,6 @@
   .reg-custom-row td{padding:6px 8px}
   .reg-table input[type=text], .reg-table textarea { max-width: 100%; }
 
-  /* ── SAVE BAR ── */
   .header-actions {
     display: flex; align-items: center; gap: 8px; margin-right: 8px;
   }
@@ -543,8 +542,7 @@
     font-family: 'DM Sans', sans-serif; font-size: 13px;
     padding: 6px 10px; border: 0.5px solid var(--border-mid);
     border-radius: var(--radius-sm); background: #fafaf8;
-    width: 100%; outline: none;
-    min-width: 0;
+    width: 100%; min-width: 0; outline: none;
   }
   .save-bar-input:focus { border-color: var(--coral); background: #fff; }
 
@@ -991,10 +989,10 @@
       <div class="card-title"><span class="dot" style="background:#534AB7"></span>SWOT analysis<button class="help-btn" onclick="openHelp('swot')" title="Help: SWOT Analysis">?</button><button class="copy-btn" onclick="exportTab('swot')" title="Export as HTML report">⬇ Export</button></div>
       <p style="font-size:13px;color:var(--text-sec);margin-bottom:16px">Assess internal strengths and weaknesses alongside external opportunities and threats to guide strategy and process decisions.</p>
       <div class="swot-grid">
-        <div class="swot-quadrant" style="--swot-color:#1D9E75"><h3>Strengths</h3><div id="swot-strengths"></div><button class="btn btn-sm" onclick="addSwotItem('strengths')">+ Add strength</button></div>
-        <div class="swot-quadrant" style="--swot-color:#A32D2D"><h3>Weaknesses</h3><div id="swot-weaknesses"></div><button class="btn btn-sm" onclick="addSwotItem('weaknesses')">+ Add weakness</button></div>
-        <div class="swot-quadrant" style="--swot-color:#185FA5"><h3>Opportunities</h3><div id="swot-opportunities"></div><button class="btn btn-sm" onclick="addSwotItem('opportunities')">+ Add opportunity</button></div>
-        <div class="swot-quadrant" style="--swot-color:#BA7517"><h3>Threats</h3><div id="swot-threats"></div><button class="btn btn-sm" onclick="addSwotItem('threats')">+ Add threat</button></div>
+        <div class="swot-quadrant" style="--swot-color:#1D9E75"><h3>Strengths</h3><div id="swot-strengths" class="swot-list"></div><button class="btn btn-sm" onclick="addSwotItem('strengths')">+ Add strength</button></div>
+        <div class="swot-quadrant" style="--swot-color:#A32D2D"><h3>Weaknesses</h3><div id="swot-weaknesses" class="swot-list"></div><button class="btn btn-sm" onclick="addSwotItem('weaknesses')">+ Add weakness</button></div>
+        <div class="swot-quadrant" style="--swot-color:#185FA5"><h3>Opportunities</h3><div id="swot-opportunities" class="swot-list"></div><button class="btn btn-sm" onclick="addSwotItem('opportunities')">+ Add opportunity</button></div>
+        <div class="swot-quadrant" style="--swot-color:#BA7517"><h3>Threats</h3><div id="swot-threats" class="swot-list"></div><button class="btn btn-sm" onclick="addSwotItem('threats')">+ Add threat</button></div>
       </div>
     </div>
   </div>
@@ -2511,11 +2509,10 @@ function putSessions(sessions) {
 function updateSaveBarLabel() {
   const sessions = getAllSessions();
   const active = activeSessionId ? sessions.find(s=>s.id===activeSessionId) : null;
-  const lbl = document.getElementById('save-bar-session');
-  if (active) {
-    lbl.innerHTML = `Active session: <strong>${active.name}</strong>`;
-  } else {
-    lbl.innerHTML = 'No active session — enter a name below to save';
+  const input = document.getElementById('save-bar-name');
+  if (!input) return;
+  if (active && !input.value.trim()) {
+    input.value = active.name;
   }
 }
 
@@ -2638,7 +2635,7 @@ function _doSave(nameOverride) {
 }
 
 function _flashSaveBtn(msg) {
-  const btns = [document.getElementById('save-bar-btn')].filter(Boolean);
+  const btns = [document.getElementById('header-save-btn')].filter(Boolean);
   btns.forEach(btn => {
     if (!btn) return;
     const orig = btn.innerHTML;
