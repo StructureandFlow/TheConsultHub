@@ -629,6 +629,10 @@ textarea{resize:none;overflow:hidden;min-height:56px;line-height:1.5}
   <div class="modal modal-sm">
     <div class="modal-header"><div class="modal-title">⏱ Log Time Manually</div><button class="modal-close" onclick="closeManualTime()">×</button></div>
     <div class="modal-body">
+      <div style="margin-bottom:16px">
+        <label class="fl" for="mt-date" style="display:block;margin-bottom:6px">Date</label>
+        <input id="mt-date" type="date" style="width:100%">
+      </div>
       <!-- Mode toggle -->
       <div style="display:flex;gap:0;margin-bottom:18px;border:.5px solid var(--border-mid);border-radius:var(--radius-sm);overflow:hidden">
         <button id="mt-mode-duration" onclick="setManualMode('duration')"
@@ -2709,10 +2713,10 @@ function renderTimerLog(taskId) {
   </div>`;
 }
 
-function logTime(taskId, minutes, type, label) {
+function logTime(taskId, minutes, type, label, date=today()) {
   if (!taskId || minutes <= 0) return;
   if (!timeLogs[taskId]) timeLogs[taskId] = [];
-  timeLogs[taskId].push({ date: today(), minutes, type: type||'timer', label: label||'' });
+  timeLogs[taskId].push({ date, minutes, type: type||'timer', label: label||'' });
   renderTimeDashboard();
   renderTable();
   autoSave();
@@ -2726,18 +2730,19 @@ function logTime(taskId, minutes, type, label) {
 function editTimeLog(taskId,index){
   const log=timeLogs[taskId]?.[index];
   if(!log)return;
-  const value=prompt('Enter the correct time in minutes:',String(log.minutes));
-  if(value===null)return;
-  const minutes=parseInt(value,10);
-  if(!Number.isFinite(minutes)||minutes<=0){alert('Please enter a positive number of minutes.');return;}
-  log.minutes=minutes;
-  renderTimeDashboard();
-  renderTable();
-  autoSave();
-  if(_editTask?.id===taskId){
-    const logEl=document.querySelector('.timer-log');
-    if(logEl)logEl.outerHTML=renderTimerLog(taskId);
-  }
+  openManualTime(taskId);
+  _editingTimeLogIndex=index;
+  document.querySelector('#manual-time-overlay .modal-title').textContent = 'Edit Logged Time';
+  document.querySelector('#manual-time-overlay .btn-primary').textContent = 'Save changes';
+  document.getElementById('mt-date').value=log.date||today();
+  const hours=Math.floor(log.minutes/60), minutes=log.minutes%60;
+  const hoursSelect=document.getElementById('mt-dur-hours');
+  if(!Array.from(hoursSelect.options).some(option=>+option.value===hours))hoursSelect.add(new Option(String(hours),String(hours)));
+  const minutesSelect=document.getElementById('mt-dur-mins');
+  if(!Array.from(minutesSelect.options).some(option=>+option.value===minutes))minutesSelect.add(new Option(String(minutes).padStart(2,'0'),String(minutes)));
+  hoursSelect.value=String(hours);
+  minutesSelect.value=String(minutes);
+  setManualMode('duration');
 }
 
 function getTaskTotalTime(taskId) {
@@ -2785,6 +2790,7 @@ function updateTableTimerBadges() {
 
 // ── MANUAL TIME ENTRY ──
 let _manualMode = 'duration';
+let _editingTimeLogIndex = null;
 
 function setManualMode(mode) {
   _manualMode = mode;
@@ -2806,7 +2812,11 @@ function updateDurationPreview() {
 
 function openManualTime(taskId) {
   _manualTaskId = taskId;
+  _editingTimeLogIndex = null;
   _manualMode = 'duration';
+  document.querySelector('#manual-time-overlay .modal-title').textContent = 'Log Time Manually';
+  document.querySelector('#manual-time-overlay .btn-primary').textContent = 'Log time';
+  document.getElementById('mt-date').value = today();
 
   // Reset duration
   const dh = document.getElementById('mt-dur-hours');
@@ -2838,6 +2848,7 @@ function openManualTime(taskId) {
 function closeManualTime() {
   document.getElementById('manual-time-overlay').classList.remove('open');
   _manualTaskId = null;
+  _editingTimeLogIndex = null;
 }
 
 function toMinutes24(h, m, ap) {
@@ -2874,9 +2885,22 @@ function logManualTime() {
     const el = `${document.getElementById('mt-end-h').value}:${document.getElementById('mt-end-m').value} ${document.getElementById('mt-end-ap').value}`;
     label = `${sl} – ${el}`;
   }
-  logTime(_manualTaskId, diff, 'manual', label);
+  const taskId = _manualTaskId;
+  const date = document.getElementById('mt-date').value;
+  if (!date) { alert('Please select a date.'); return; }
+  if (_editingTimeLogIndex !== null) {
+    const log = timeLogs[taskId]?.[_editingTimeLogIndex];
+    if (!log) { closeManualTime(); return; }
+    log.date = date;
+    log.minutes = diff;
+    renderTimeDashboard();
+    renderTable();
+    autoSave();
+  } else {
+    logTime(taskId, diff, 'manual', label, date);
+  }
   closeManualTime();
-  if (_editTask?.id === _manualTaskId) {
+  if (_editTask?.id === taskId) {
     syncModalFields();
     const isEdit = tasks.some(t => t.id === _editTask.id);
     renderTaskModal(isEdit);
